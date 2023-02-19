@@ -29,6 +29,7 @@ Currently supported languages:
   * **Optional**:
     * [Rank-BM25](https://github.com/dorianbrown/rank_bm25) as a first efficient ranking stage if you want to use [MatchZoo](https://github.com/NTMC-Community/MatchZoo)
     * [MatchZoo](https://github.com/NTMC-Community/MatchZoo) in order to train and evaluate neural networks on the collection
+    * [PythaiNLP](https://github.com/PyThaiNLP/pythainlp) and [PyICU](https://github.com/ovalhub/pyicu) in order to tokenize Thai language and remove stopwords for BM25 ranking (We use ICU tokenizer simply for speed, but you can easily modify the code in `build-wikiIR.py` for other tokenizers)
 
 *****
 ## Installation
@@ -50,6 +51,12 @@ Install [MatchZoo](https://github.com/NTMC-Community/MatchZoo) (optional)
 git clone https://github.com/NTMC-Community/MatchZoo.git
 cd MatchZoo
 python setup.py install
+```
+
+Install [PythaiNLP](https://github.com/PyThaiNLP/pythainlp) and [PyICU](https://github.com/ovalhub/pyicu) (optional)
+```bash
+pip install pythainlp==3.1.*
+pip install PyICU
 ```
 *****
 ## Usage
@@ -212,10 +219,10 @@ You can download *wikIR59k* [here](https://zenodo.org/record/3557342#.XeD3c-ZKg5
 
 Datasets in more languages are also available:
 
-|   | English | French | Spanish | Italian |
-|:-------------:|:-------------:|:-------------:|:-----:|:-----:|
-| title queries | [ENwikIR59k](https://zenodo.org/record/3557342#.Xe_gQ-ZKhhE) | [FRwikIR14k](https://zenodo.org/record/3569718#.Xe_gYOZKhhE) | [ESwikIR13k](https://zenodo.org/record/3569724#.Xe_geOZKhhE) | [ITwikIR16k](https://zenodo.org/record/3569732#.Xe_gj-ZKhhE) |
-| first sentence queries| [ENwikIRS59k](https://zenodo.org/record/3569708#.Xe_gT-ZKhhE) | [FRwikIRS14k](https://zenodo.org/record/3569720#.Xe_ga-ZKhhE) | [ESwikIRS13k](https://zenodo.org/record/3569726#.Xe_ggeZKhhE) | [ITwikIRS16k](https://zenodo.org/record/3569734#.Xe_gnOZKhhE) |
+|   | English | French | Spanish | Italian | Thai
+|:-------------:|:-------------:|:-------------:|:-----:|:-----:|:---:|
+| title queries | [ENwikIR59k](https://zenodo.org/record/3557342#.Xe_gQ-ZKhhE) | [FRwikIR14k](https://zenodo.org/record/3569718#.Xe_gYOZKhhE) | [ESwikIR13k](https://zenodo.org/record/3569724#.Xe_geOZKhhE) | [ITwikIR16k](https://zenodo.org/record/3569732#.Xe_gj-ZKhhE) | Coming Soon |
+| first sentence queries| [ENwikIRS59k](https://zenodo.org/record/3569708#.Xe_gT-ZKhhE) | [FRwikIRS14k](https://zenodo.org/record/3569720#.Xe_ga-ZKhhE) | [ESwikIRS13k](https://zenodo.org/record/3569726#.Xe_ggeZKhhE) | [ITwikIRS16k](https://zenodo.org/record/3569734#.Xe_gnOZKhhE) | Coming Soon |
 
 
 We propose datasets with short and well defined queries built from titles (ENwikIR59k, FRwikIR14k) and datasets with long and noisy queries built from first sentences (ENwikIRS59k, FRwikIRS14k) to study robustness of IR models to noise.

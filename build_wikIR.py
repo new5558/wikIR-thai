@@ -15,7 +15,6 @@ from tqdm.auto import tqdm
 
 import urllib.parse
 
-
 """Reads the file produced by wikiextract.
     
     Args:
@@ -27,21 +26,26 @@ import urllib.parse
         (dict) documents_ids: keys are articles titles and values are the associated doc_ids
 
 """
-def read_wikiextractor(file,min_nb_words,max_docs):
+def read_wikiextractor(file,min_nb_words,max_docs,language):
     documents = dict()
     documents_ids = dict()
     doc_id = 0
     with open(file) as f:
         for line in f:
             try:
-              article = json.loads(line)
-              text = article['text']
-              if len(text.split(' ')) < min_nb_words : continue
-              documents_ids[article['title']] = doc_id
-              documents[doc_id] = text
-              doc_id += 1
+                article = json.loads(line)
+                text = article['text']
+                if language == 'th':
+                    from pythainlp.tokenize import word_tokenize as thai_word_tokenize                    
+                    token_count = len(thai_word_tokenize(text, engine='icu'))
+                else:
+                    token_count = len(text.split(' '))
+                if token_count < min_nb_words : continue
+                documents_ids[article['title']] = doc_id
+                documents[doc_id] = text
+                doc_id += 1
             except json.decoder.JSONDecodeError as e:
-              print(e)
+                print(e)
     if max_docs:
         titles = random.sample(documents_ids.keys(),k = max_docs)
         documents_ids = {title: documents_ids[title] for title in titles}
@@ -79,7 +83,13 @@ def build_qrels(documents,documents_ids,len_doc,min_rel,only_first_sentence,lang
                 first_sentence_location = short_doc.find('.')
             short_doc = short_doc[:first_sentence_location]
         else:
-            short_doc = ' '.join(value.split(' ')[:len_doc])
+            if language == 'th':
+                from pythainlp.tokenize import word_tokenize as thai_word_tokenize
+                tokenized_text = thai_word_tokenize(value, engine='icu')[:len_doc]
+                len_doc_char = sum(list(map(len, tokenized_text)))
+                short_doc = ' '.join(value[:len_doc_char].split())
+            else:
+                short_doc = ' '.join(value.split(' ')[:len_doc])
         list_qrels = re.findall(r'(?:href=")([^"]+)', short_doc)
         list_qrels = [urllib.parse.unquote(elem) for elem in list_qrels] # Unquote unicode URL (ex. E0%B8%98%E0%B8%B2%E0%B8%95%E0%B8%B8)
         linked_docs = set([documents_ids[elem.replace('%20',' ')] for elem in list_qrels if elem.replace('%20',' ') in documents_ids])
@@ -146,21 +156,34 @@ def clean_docs_and_build_queries(qrels,documents,len_doc,len_query,skip_first_se
             queries[key] = document[:first_sentence_location]
             
         if skip_first_sentence:
-            if lower_cased:
-                documents[key] = ' '.join(regex.sub(' ', document[first_sentence_location:]).lower().split()[:len_doc])
-            else:
-                documents[key] = ' '.join(regex.sub(' ', document[first_sentence_location:]).split()[:len_doc])
+            document = document[first_sentence_location:]
+        
+        text = regex.sub(' ', document)
+        
+        if lower_cased:
+            text = text.lower()
+
+        if language == 'th':
+            from pythainlp.tokenize import word_tokenize as thai_word_tokenize
+            tokenized_text = thai_word_tokenize(text, engine='icu')[:len_doc]
+            len_doc_char = sum(list(map(len, tokenized_text)))
+            documents[key] = ' '.join(text[:len_doc_char].split())
         else:
-            if lower_cased:
-                documents[key] = ' '.join(regex.sub(' ', document).lower().split()[:len_doc])
-            else:
-                documents[key] = ' '.join(regex.sub(' ', document).split()[:len_doc])
+            documents[key] = ' '.join(text.split()[:len_doc])
         
         if key in qrels:
+            query = regex.sub(' ', queries[key])
             if lower_cased:
-                    queries[key] = ' '.join(regex.sub(' ', queries[key]).lower().split()[:len_query])
+                query = query.lower()
+
+            if language == 'th':
+                from pythainlp.tokenize import word_tokenize as thai_word_tokenize
+                tokenized_query = thai_word_tokenize(query, engine='icu')[:len_doc]
+                len_query_char = sum(list(map(len, tokenized_query)))
+                queries[key] = ' '.join(query[:len_query_char].split())
             else:
-                queries[key] = ' '.join(regex.sub(' ', queries[key]).split()[:len_query])
+                queries[key] = ' '.join(query.lower().split()[:len_query])
+            
 
     return documents,queries
 
@@ -529,11 +552,15 @@ def run_BM25_query(query,bm25,doc_indexes,k,language):
         stemmer = ItalianStemmer()
     
     elif language=='th':
-        raise Error('Thai is not yet supported for BM25 query')
+        from pythainlp.corpus import thai_stopwords
+        stop_words = set(thai_stopwords())
     
 
-    
-    tokenized_query = [stemmer.stem(elem) for elem in query.split(" ") if elem not in stop_words]
+    if language == 'th':
+        from pythainlp.tokenize import word_tokenize as thai_word_tokenize
+        tokenized_query = [elem for elem in thai_word_tokenize(query, engine='icu') if elem not in stop_words]
+    else:
+        tokenized_query = [stemmer.stem(elem) for elem in query.split(" ") if elem not in stop_words]
     doc_scores = bm25.get_scores(tokenized_query)
     top_k = np.argsort(doc_scores)[::-1][:k]
     results = [[doc_indexes[key],doc_scores[key]] for key in top_k]
@@ -572,13 +599,18 @@ def run_BM25_collection(output_dir,documents,queries,qrels,train,validation,test
         stemmer = ItalianStemmer()
     
     elif language=='th':
-        raise Error('Thai is not yet supported for BM25 query')
+        from pythainlp.corpus import thai_stopwords
+        stop_words = set(thai_stopwords())
     
     corpus = [] 
     doc_indexes = []
     for key,value in documents.items():
         doc_indexes.append(key)
-        doc = [stemmer.stem(elem) for elem in value.split(" ") if elem not in stop_words]
+        if language == 'th':
+            from pythainlp.tokenize import word_tokenize as thai_word_tokenize
+            doc = [stemmer.stem(elem) for elem in thai_word_tokenize(value, engine='icu') if elem not in stop_words]
+        else:
+            doc = [stemmer.stem(elem) for elem in value.split(" ") if elem not in stop_words]
         corpus.append(value.split(" "))
     from rank_bm25 import BM25Okapi
     bm25 = BM25Okapi(corpus)
@@ -642,7 +674,8 @@ def main():
     print("Reading wikiextractor file",flush=True)
     documents,documents_ids = read_wikiextractor(args.input,
                                                  args.min_len_doc,
-                                                 args.max_docs)
+                                                 args.max_docs,
+                                                 args.language)
     print(len(documents),"documents have more than",args.min_len_doc,"tokens")
     
     print("Building qrels",flush=True)
