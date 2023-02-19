@@ -6,6 +6,7 @@ Currently supported languages:
 **French**  
 **Spanish**  
 **Italian**  
+**Thai**
 
 # Table of Contents
 1. [Requirements](#Requirements)
@@ -80,7 +81,7 @@ arguments :
 optional argument:
 
     [--language]                  Language of the input json file
-                                  Possible values: 'en','fr','es','it'
+                                  Possible values: 'en','fr','es','it', 'th'
                                   Default value: 'en'
 
     [-m,--max_docs]               Maximum number of documents in the collection

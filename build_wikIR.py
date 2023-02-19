@@ -6,12 +6,14 @@ import argparse
 import pytrec_eval
 import numpy as np
 import pandas as pd
-from rank_bm25 import BM25Okapi
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import FrenchStemmer
 from nltk.stem.snowball import SpanishStemmer
 from nltk.stem.snowball import ItalianStemmer
+from tqdm.auto import tqdm
+
+import urllib.parse
 
 
 """Reads the file produced by wikiextract.
@@ -31,13 +33,15 @@ def read_wikiextractor(file,min_nb_words,max_docs):
     doc_id = 0
     with open(file) as f:
         for line in f:
-            article = json.loads(line)
-            text = article['text']
-            if len(text.split(' ')) < min_nb_words : continue
-            documents_ids[article['title']] = doc_id
-            documents[doc_id] = text
-            doc_id += 1
-            
+            try:
+              article = json.loads(line)
+              text = article['text']
+              if len(text.split(' ')) < min_nb_words : continue
+              documents_ids[article['title']] = doc_id
+              documents[doc_id] = text
+              doc_id += 1
+            except json.decoder.JSONDecodeError as e:
+              print(e)
     if max_docs:
         titles = random.sample(documents_ids.keys(),k = max_docs)
         documents_ids = {title: documents_ids[title] for title in titles}
@@ -62,17 +66,22 @@ def read_wikiextractor(file,min_nb_words,max_docs):
         (dict) qrels: keys are queries ids and values are a list of pair (doc_ids,relevance_level)
     
 """
-def build_qrels(documents,documents_ids,len_doc,min_rel,only_first_sentence):
+def build_qrels(documents,documents_ids,len_doc,min_rel,only_first_sentence,language):
     qrels = {key:[] for key in documents}
     for key,value in documents.items():
         if only_first_sentence:
             end_of_title = value.find('\n')
-            short_doc = value[end_of_title:]
-            first_sentence_location = short_doc.find('.')
+            if language == 'th':
+                short_doc = value[end_of_title + 2:]
+                first_sentence_location = short_doc.find('\n')
+            else:
+                short_doc = value[end_of_title:]
+                first_sentence_location = short_doc.find('.')
             short_doc = short_doc[:first_sentence_location]
         else:
             short_doc = ' '.join(value.split(' ')[:len_doc])
         list_qrels = re.findall(r'(?:href=")([^"]+)', short_doc)
+        list_qrels = [urllib.parse.unquote(elem) for elem in list_qrels] # Unquote unicode URL (ex. E0%B8%98%E0%B8%B2%E0%B8%95%E0%B8%B8)
         linked_docs = set([documents_ids[elem.replace('%20',' ')] for elem in list_qrels if elem.replace('%20',' ') in documents_ids])
         linked_docs.discard(key)
         for document in linked_docs:
@@ -111,8 +120,10 @@ def clean_docs_and_build_queries(qrels,documents,len_doc,len_query,skip_first_se
     queries = dict()
     
     if language=='en':
-        regex = re.compile('[^a-zA-Z0-9]')
-
+        regex = re.compile("[^a-zA-Z0-9]")
+    elif language=='th':
+        thai_chars = "".join([chr(i) for i in range(3584, 3712)])
+        regex = re.compile(f"[^a-zA-Z0-9{thai_chars}]")
     else:
         regex = re.compile('[^a-zÀ-ÿA-Z0-9]')
 
@@ -124,8 +135,12 @@ def clean_docs_and_build_queries(qrels,documents,len_doc,len_query,skip_first_se
         if title_queries and key in qrels:
             queries[key] = document[:end_of_title]
             
-        document = document[end_of_title:]
-        first_sentence_location = document.find('. ')
+        if language == 'th':
+            document = document[end_of_title + 2:]
+            first_sentence_location = document.find('\n')
+        else:
+            document = document[end_of_title:]
+            first_sentence_location = document.find('. ')
         
         if not title_queries and key in qrels:
             queries[key] = document[:first_sentence_location]
@@ -513,6 +528,11 @@ def run_BM25_query(query,bm25,doc_indexes,k,language):
         stop_words = set(stopwords.words('italian'))
         stemmer = ItalianStemmer()
     
+    elif language=='th':
+        raise Error('Thai is not yet supported for BM25 query')
+    
+
+    
     tokenized_query = [stemmer.stem(elem) for elem in query.split(" ") if elem not in stop_words]
     doc_scores = bm25.get_scores(tokenized_query)
     top_k = np.argsort(doc_scores)[::-1][:k]
@@ -551,6 +571,8 @@ def run_BM25_collection(output_dir,documents,queries,qrels,train,validation,test
         stop_words = set(stopwords.words('italian'))
         stemmer = ItalianStemmer()
     
+    elif language=='th':
+        raise Error('Thai is not yet supported for BM25 query')
     
     corpus = [] 
     doc_indexes = []
@@ -558,6 +580,7 @@ def run_BM25_collection(output_dir,documents,queries,qrels,train,validation,test
         doc_indexes.append(key)
         doc = [stemmer.stem(elem) for elem in value.split(" ") if elem not in stop_words]
         corpus.append(value.split(" "))
+    from rank_bm25 import BM25Okapi
     bm25 = BM25Okapi(corpus)
     
     print("Running BM25",flush=True)
@@ -588,7 +611,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i','--input', nargs="?", type=str)
     parser.add_argument('-o','--output_dir', nargs="?", type=str)
-    parser.add_argument('--language', nargs="?", type=str,choices=['en','fr','es','it'],default='en')
+    parser.add_argument('--language', nargs="?", type=str,choices=['en','fr','es','it', 'th'],default='en')
     parser.add_argument('-m','--max_docs', nargs="?", type=int, default = None)
     parser.add_argument('-d','--len_doc', nargs="?", type=int, default = 200)
     parser.add_argument('-q','--len_query', nargs="?", type=int, default = 10)
@@ -627,7 +650,8 @@ def main():
                         documents_ids,
                         args.len_doc,
                         args.min_nb_rel_doc,
-                        args.only_first_links)
+                        args.only_first_links,
+                        args.language)
     
     print(len(qrels),"qrels have been built",flush=True)
         
