@@ -6,7 +6,7 @@ Currently supported languages:
 **French**  
 **Spanish**  
 **Italian**  
-**Thai**
+**Thai (Added in this fork)**
 
 # Table of Contents
 1. [Requirements](#Requirements)
@@ -263,6 +263,40 @@ rm enwiki.json
 ```
 
 COLLECTION_PATH is the directory where *wikIR59k* will be stored
+
+### Reproduce *THwikIR10k* dataset
+
+To reproduce the *THwikIR10k* dataset, execute the follwing lines in the wikIR directory
+
+```bash
+wget https://dumps.wikimedia.org/thwiki/20230201/thwiki-20230201-pages-articles-multistream.xml.bz2
+bzip2 -d thwiki-20230201-pages-articles-multistream.xml.bz2
+python wikiextractor/WikiExtractor.py thwiki-20230201-pages-articles-multistream --output - --bytes 100G --links --quiet --json > thwiki.json
+rm thwiki-20230201-pages-articles-multistream.xml.bz2
+rm thwiki-20230201-pages-articles-multistream.xml
+python build_wikIR.py --input thwiki.json --output_dir COLLECTION_PATH/THwikIR10k --validation_part 1000 --test_part 1000 --min_len_doc 300 --min_nb_rel_doc 5 -f -s -c --language th -u
+rm thwiki.json
+```
+
+COLLECTION_PATH is the directory where *THwikIR10k* will be stored
+
+### Reproduce *THwikIRS10k* dataset
+
+To reproduce the *THwikIRS10k* dataset, execute the follwing lines in the wikIR directory
+
+```bash
+wget https://dumps.wikimedia.org/thwiki/20230201/thwiki-20230201-pages-articles-multistream.xml.bz2
+bzip2 -d thwiki-20230201-pages-articles-multistream.xml.bz2
+python wikiextractor/WikiExtractor.py thwiki-20230201-pages-articles-multistream --output - --bytes 100G --links --quiet --json > thwiki.json
+rm thwiki-20230201-pages-articles-multistream.xml.bz2
+rm thwiki-20230201-pages-articles-multistream.xml
+python build_wikIR.py --input thwiki.json --output_dir COLLECTION_PATH/THwikIRS10k --validation_part 1000 --test_part 1000 --min_len_doc 300 --min_nb_rel_doc 5 -f -s -c --language th
+rm thwiki.json
+```
+
+COLLECTION_PATH is the directory where *THwikIRS10k* will be stored
+
+
 
 :warning: bm25 can take several days to solve all the queires on *wikIR59k*, therefore the bm25 results files are provided in the dowloadable datasets.
 
