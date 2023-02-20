@@ -1,4 +1,4 @@
-# WIKIR
+# WIKIR Thai
 A python tool for building large scale Wikipedia-based Information Retrieval datasets
 
 Currently supported languages:  
