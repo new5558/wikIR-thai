@@ -221,8 +221,8 @@ Datasets in more languages are also available:
 
 |   | English | French | Spanish | Italian | Thai
 |:-------------:|:-------------:|:-------------:|:-----:|:-----:|:---:|
-| title queries | [ENwikIR59k](https://zenodo.org/record/3557342#.Xe_gQ-ZKhhE) | [FRwikIR14k](https://zenodo.org/record/3569718#.Xe_gYOZKhhE) | [ESwikIR13k](https://zenodo.org/record/3569724#.Xe_geOZKhhE) | [ITwikIR16k](https://zenodo.org/record/3569732#.Xe_gj-ZKhhE) | Coming Soon |
-| first sentence queries| [ENwikIRS59k](https://zenodo.org/record/3569708#.Xe_gT-ZKhhE) | [FRwikIRS14k](https://zenodo.org/record/3569720#.Xe_ga-ZKhhE) | [ESwikIRS13k](https://zenodo.org/record/3569726#.Xe_ggeZKhhE) | [ITwikIRS16k](https://zenodo.org/record/3569734#.Xe_gnOZKhhE) | Coming Soon |
+| title queries | [ENwikIR59k](https://zenodo.org/record/3557342#.Xe_gQ-ZKhhE) | [FRwikIR14k](https://zenodo.org/record/3569718#.Xe_gYOZKhhE) | [ESwikIR13k](https://zenodo.org/record/3569724#.Xe_geOZKhhE) | [ITwikIR16k](https://zenodo.org/record/3569732#.Xe_gj-ZKhhE) | [THwikIR10k](https://github.com/new5558/wikIR-thai/blob/master/data/THwikIR10k.zip) |
+| first sentence queries| [ENwikIRS59k](https://zenodo.org/record/3569708#.Xe_gT-ZKhhE) | [FRwikIRS14k](https://zenodo.org/record/3569720#.Xe_ga-ZKhhE) | [ESwikIRS13k](https://zenodo.org/record/3569726#.Xe_ggeZKhhE) | [ITwikIRS16k](https://zenodo.org/record/3569734#.Xe_gnOZKhhE) | [THwikIRS10k](https://github.com/new5558/wikIR-thai/blob/master/data/THwikIRS10k.zip) |
 
 
 We propose datasets with short and well defined queries built from titles (ENwikIR59k, FRwikIR14k) and datasets with long and noisy queries built from first sentences (ENwikIRS59k, FRwikIRS14k) to study robustness of IR models to noise.
