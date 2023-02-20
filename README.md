@@ -6,7 +6,13 @@ Currently supported languages:
 **French**  
 **Spanish**  
 **Italian**  
-**Thai (Added in this fork)**
+**Thai** (Added in this fork)
+
+### Changelog for this fork
+1. feat: add support for Thai language including pipeline, reproducible scripts, and downloadable datasets (THwikIR10k and THwikIRS10k)
+2. fix: makes [BM25 optional depedency](https://github.com/getalp/wikIR/pull/2)
+3. fix: catch json decode error when reading wiki.json file
+4. fix: update docs to correctly describe [default len_doc](https://github.com/getalp/wikIR/issues/4)
 
 # Table of Contents
 1. [Requirements](#Requirements)
@@ -95,7 +101,7 @@ optional argument:
                                   Default value None
 
     [-d,--len_doc]                Number of max tokens in documents
-                                  Default value None: all tokens are preserved
+                                  Default value 200: all tokens are preserved
                                   
     [-q,--len_query]              Number of max tokens in queries
                                   Default value None: all tokens are preserved
